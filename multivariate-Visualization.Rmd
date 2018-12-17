@@ -1,0 +1,218 @@
+---
+title: "Visualization of Multivariate Data"
+output: html_document
+---
+
+##Contour Plot
+The random variables X and Y are independent and identically distributed
+with normal mixture distributions. The components of the mixture have
+$N(0, 1)$ and $N(3, 1)$ distributions with mixing probabilities $p1$ and $p2 = 1 - p1$
+respectively. Generate a bivariate random sample from the joint distribution
+of $(X, Y )$ and construct a contour plot. Adjust the levels of the contours so
+that the the contours of the second mode are visible.
+```{r }
+library(MASS)
+# function to calculate mixture distribution
+# I copied this function from previous HW
+mixture = function(p, mu1, mu2, Sigma1, Sigma2){
+n <- 100
+n1 <- rbinom(1, size = n, prob = p)
+n2 <- n-n1
+x1 <- mvrnorm(n1, mu = mu1, Sigma1)
+x2 <- mvrnorm(n2, mu = mu2, Sigma2)
+A <- rbind(x1, x2) #combine the samples
+
+return(A[sample(1:n), ])
+}
+
+
+
+#Function for Joint Distribution 
+#Since X and Y samples are independent so, the joint distribution f(x,y) = f(x)*f(y)
+fxy <- function(x, y){
+  fx <- p*dnorm(x, 0, 1)+ (1-p)*dnorm(x, 3, 1)
+  fy <- p*dnorm(y, 0, 1)+ (1-p)*dnorm(y, 3, 1)
+  return(fx*fy)
+}  
+  
+#This is the function which plots the contourplot for samples X and Y given their joint pdf
+contourplot <- function(p, mu1, mu2, Sigma1, Sigma2){
+X <- sort(mixture(p, mu1, mu2, Sigma1, Sigma2)) #sorting the samples in ascending order
+Y <- sort(mixture(p, mu1, mu2, Sigma1, Sigma2))
+z <- outer(X, Y, fxy)
+
+contour(X, Y, z, main = paste("p =", p)) 
+}
+
+#Passing to the functions
+mu1 = 0
+mu2 = 3
+Sigma1 = 1
+Sigma2 = 1 
+
+p<- 0.5 
+contourplot(p, mu1, mu2, Sigma1, Sigma2)
+
+
+```
+
+Since we passed p =0.5, that gives the bimodal multivariate distribution which is shown by the four elliptical plots. The two modes we get are at x=0 and x=3 and same for the y axis as well.
+
+
+ 
+
+
+##Filled Contour Plot
+Construct a filled contour plot of the bivariate mixture in first problem 
+```{r}
+library(lattice)
+filledcontourplot <- function(p, mu1, mu2, Sigma1, Sigma2){
+X <- sort(mixture(p, mu1, mu2, Sigma1, Sigma2)) #sorting the samples in ascending order
+Y <- sort(mixture(p, mu1, mu2, Sigma1, Sigma2))
+z <- outer(X, Y, fxy)
+
+#image(X, Y, z, col = terrain.colors(100), axes = FALSE)
+filled.contour(X, Y, z, colors = terrain.colors,asp =1)
+#levelplot(X, Y, z, scales = list(draw=FALSE), xlab = "", ylab = "")
+
+}
+
+mu1 = 0
+mu2 = 3
+Sigma1 = 1
+Sigma2 = 1 
+
+p <- 0.5
+filledcontourplot(p, mu1, mu2, Sigma1, Sigma2)
+
+
+```
+
+This Filled contour plot shows the region of contour with different colours. which is a good graphical representation. 
+
+#Surface Plot
+Construct a surface plot of the bivariate mixture of the first problem
+```{r}
+surfaceplot <- function(p, mu1, mu2, Sigma1, Sigma2){
+X <- sort(mixture(p, mu1, mu2, Sigma1, Sigma2)) #sorting the samples in ascending order
+Y <- sort(mixture(p, mu1, mu2, Sigma1, Sigma2))
+z <- outer(X, Y, fxy)
+
+#persp(X, Y, z) #default plot
+persp(X, Y, z, theta = 45, phi = 30, expand = 0.6, ltheta = 120, shade = 0.75, ticktype = "detailed", xlab = "X", ylab = "Y", zlab = "f(x,y)")
+
+} 
+
+mu1 = 0
+mu2 = 3
+Sigma1 = 1
+Sigma2 = 1 
+p <- 0.2
+surfaceplot(p, mu1, mu2, Sigma1, Sigma2)
+
+```
+
+This surface plot gives a perfect visual representation of multivariate distribution in 3 dimensional view with a mesh of grids. 
+
+#
+Repeat the first problem for various different choices of the parameters of the
+mixture model, and compare the distributions through contour plots.
+```{r}
+#let's consider mu1 = 5, Sigma1= 2, mu2 = 10, Sigma2 =1, p=0.4
+
+mu1 = 0
+mu2 = 3
+Sigma1 = 1
+Sigma2 = 1 
+
+par(mfrow= c(2,2))
+
+p<- 0.2
+contourplot(p, mu1, mu2, Sigma1, Sigma2)
+
+p<- 0.4 
+contourplot(p, mu1, mu2, Sigma1, Sigma2)
+
+p <- 0.6
+contourplot(p, mu1, mu2, Sigma1, Sigma2)
+
+p<- 0.8 
+contourplot(p, mu1, mu2, Sigma1, Sigma2)
+
+```
+
+With different p-values, we observed different contour plots. From these graphs, we see that if we have larger p-values then the plot is concentrated toward mu1(ie 0). Likewise if we have smaller p-values(high (1-p) value), then the distribution is concentrated towards mu2. If p=1-p =0.5, then we observe the bimodal distribution, which is shown in contourplot with 4 elliptical plots.
+
+
+##Parallel Coordinate Plot
+Create a parallel coordinates plot of the crabs $(MASS) [278]$ data using all 200 observations. Compare the plots before and after adjusting the measurements by the size of the crab. Interpret the resulting plots.
+
+```{r}
+
+library(MASS)
+library(lattice)
+data("crabs")
+#trellis.device(color = TRUE)
+x <- crabs # before adjustment
+parallelplot(~x[4:8] | sp*sex, x, main="Before Adjustment")
+
+#trellis.device(color = TRUE) 
+a <- crabs$CW * crabs$CL #area of carapace
+crabs[4:8] <- crabs[4:8] / sqrt(a) #adjust for size
+parallelplot(~crabs[4:8] | sp*sex, crabs, main="After Adjustment")
+
+
+```
+ 
+
+We can see in the first figure, ie. without adjusting the measurements by the size of the crab, we don't see the differences between species (B=blue, O=orange) and sex (M, F) since they are almost parallel but after adjusting the measurements for size of individual crabs(in the second figure), differences between groups are clearly visible.
+
+## Andrews Curve
+Create a plot of Andrews curves for the $leafshape17 (DAAG) [185]$ data, using the logarithms of measurements (logwid, logpet, loglen). Set line type to identify leaf architecture as in Example 4.9. Compare with the plot in Figure 4.8.
+
+```{r}
+ f <- function(a, v) {
+        #Andrews curve f(a) for a data vector v in R^3
+        v[1]/sqrt(2) + v[2]*sin(a) + v[3]*cos(a)
+    }
+
+```
+
+```{r }
+library(DAAG)
+attach(leafshape17)
+library(ggplot2)
+
+    #scale data to range [-1, 1]
+    x <- cbind(logwid, logpet, loglen)
+    n <- nrow(x)
+    mins <- apply(x, 2, min)  #column minimums
+    maxs <- apply(x, 2, max)  #column maximums
+    r <- maxs - mins          #column ranges
+    y <- sweep(x, 2, mins)    #subtract column mins
+    y <- sweep(y, 2, r, "/")  #divide by range
+    x <- 2 * y - 1            #now has range [-1, 1]
+
+    #set up plot window, but plot nothing yet
+    plot(0, 0, xlim = c(-pi, pi), ylim = c(-3,3),
+        xlab = "t", ylab = "Andrews Curves",
+        main = "", type = "n")
+
+    #now add the Andrews curves for each observation
+    #line type corresponds to leaf architecture
+    #0=orthotropic, 1=plagiotropic
+    a <- seq(-pi, pi, len=101)
+    dim(a) <- length(a)
+    for (i in 1:n) {
+        g <- arch[i] + 1
+        y <- apply(a, MARGIN = 1, FUN = f, v = x[i,])
+       lines(a, y, lty = g)
+       
+    }
+    legend(3, c("Orthotropic", "Plagiotropic"), lty = 1:2)
+    detach(leafshape17)
+
+```
+
+The difference between the two figures is the "amplitude difference". Since in the fig-4.8, we use the original leaf length, width etc but in this problem we are using the logarithms of the measurements. So, the amplitude is lower in the logarithmic scale than original scale. 
+
